@@ -54,34 +54,8 @@ int _printf(const char *format, ...)
             else if (*format == 'd' || *format == 'i')
             {
                 int num = va_arg(args, int);
-                int temp = num;
-                int digits = 1;
-
-                if (num < 0)
-                {
-                    putchar('-');
-                    count++;
-                    temp = -num;
-                }
-
-                while (temp / 10 != 0)
-                {
-                    temp /= 10;
-                    digits++;
-                }
-
-                int divisor = 1;
-                for (int i = 1; i < digits; i++)
-                    divisor *= 10;
-
-                while (divisor > 0)
-                {
-                    int digit = num / divisor;
-                    putchar(digit + '0');
-                    count++;
-                    num -= digit * divisor;
-                    divisor /= 10;
-                }
+                printf("%d", num);
+                count++;
             }
             else
             {
