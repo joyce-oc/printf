@@ -1,66 +1,100 @@
 #include "main.h"
-
-void print_buffer(char buffer[], int *buff_ind);
+#include <unistd.h>
+#include <stdio.h>
 
 /**
- * _printf - Printf function
- * @format: format.
- * Return: Printed chars.
+ * _printf - Produces output according to a format.
+ * @format: A character string containing format directives.
+ * Return: The number of characters printed (excluding the null byte).
  */
 int _printf(const char *format, ...)
 {
-	int i, printed = 0, printed_chars = 0;
-	int flags, width, precision, size, buff_ind = 0;
-	va_list list;
-	char buffer[BUFF_SIZE];
+    va_list args;
+    int count = 0;
+    char ch;
+    int num, temp, digits, divisor;
+    int i; 
 
-	if (format == NULL)
-		return (-1);
+    va_start(args, format);
 
-	va_start(list, format);
+    while (*format)
+    {
+        if (*format != '%')
+        {
+            putchar(*format);
+            count++;
+        }
+        else
+        {
+            format++;
+            if (*format == '\0')
+                break;
 
-	for (i = 0; format && format[i] != '\0'; i++)
-	{
-		if (format[i] != '%')
-		{
-			buffer[buff_ind++] = format[i];
-			if (buff_ind == BUFF_SIZE)
-				print_buffer(buffer, &buff_ind);
-			/* write(1, &format[i], 1);*/
-			printed_chars++;
-		}
-		else
-		{
-			print_buffer(buffer, &buff_ind);
-			flags = get_flags(format, &i);
-			width = get_width(format, &i, list);
-			precision = get_precision(format, &i, list);
-			size = get_size(format, &i);
-			++i;
-			printed = handle_print(format, &i, list, buffer,
-				flags, width, precision, size);
-			if (printed == -1)
-				return (-1);
-			printed_chars += printed;
-		}
-	}
+            if (*format == 'c')
+            {
+                ch = va_arg(args, int);
+                putchar(ch);
+                count++;
+            }
+            else if (*format == 's')
+            {
+                char *str = va_arg(args, char *);
+                if (str == NULL)
+                    str = "(null)";
+                while (*str)
+                {
+                    putchar(*str);
+                    str++;
+                    count++;
+                }
+            }
+            else if (*format == '%')
+            {
+                putchar('%');
+                count++;
+            }
+            else if (*format == 'd' || *format == 'i')
+            {
+                num = va_arg(args, int);
+                temp = num;
+                digits = 1;
 
-	print_buffer(buffer, &buff_ind);
+                if (num < 0)
+                {
+                    putchar('-');
+                    count++;
+                    temp = -num;
+                }
 
-	va_end(list);
+                while (temp / 10 != 0)
+                {
+                    temp /= 10;
+                    digits++;
+                }
 
-	return (printed_chars);
-}
+                divisor = 1;
+                for (i = 1; i < digits; i++) 
+                    divisor *= 10;
 
-/**
- * print_buffer - Prints the contents of the buffer if it exist
- * @buffer: Array of chars
- * @buff_ind: Index at which to add next char, represents the length.
- */
-void print_buffer(char buffer[], int *buff_ind)
-{
-	if (*buff_ind > 0)
-		write(1, &buffer[0], *buff_ind);
+                while (divisor > 0)
+                {
+                    int digit = num / divisor;
+                    putchar(digit + '0');
+                    count++;
+                    num -= digit * divisor;
+                    divisor /= 10;
+                }
+            }
+            else
+            {
+                putchar('%');
+                putchar(*format);
+                count += 2;
+            }
+        }
+        format++;
+    }
 
-	*buff_ind = 0;
+    va_end(args);
+    return count;
 }
