@@ -1,154 +1,66 @@
 #include "main.h"
-#include <unistd.h>
-#include <stdio.h>
+
+void print_buffer(char buffer[], int *buff_ind);
 
 /**
- * _printf - Produces output according to a format.
- * @format: A character string containing format directives.
- * Return: The number of characters printed (excluding the null byte).
+ * _printf - Printf function
+ * @format: format.
+ * Return: Printed chars.
  */
 int _printf(const char *format, ...)
 {
-    va_list args;
-    int count = 0;
-    char ch;
-    int num, temp, digits, divisor;
-    unsigned int u_num; 
-    int i;
+	int i, printed = 0, printed_chars = 0;
+	int flags, width, precision, size, buff_ind = 0;
+	va_list list;
+	char buffer[BUFF_SIZE];
 
-    va_start(args, format);
+	if (format == NULL)
+		return (-1);
 
-    while (*format)
-    {
-        if (*format != '%')
-        {
-            putchar(*format);
-            count++;
-        }
-        else
-        {
-            format++;
-            if (*format == '\0')
-                break;
+	va_start(list, format);
 
-            if (*format == 'c')
-            {
-                ch = va_arg(args, int);
-                putchar(ch);
-                count++;
-            }
-            else if (*format == 's')
-            {
-                char *str = va_arg(args, char *);
-                if (str == NULL)
-                    str = "(null)";
-                while (*str)
-                {
-                    putchar(*str);
-                    str++;
-                    count++;
-                }
-            }
-            else if (*format == '%')
-            {
-                putchar('%');
-                count++;
-            }
-            else if (*format == 'd' || *format == 'i')
-            {
-                num = va_arg(args, int);
-                temp = num;
-                digits = 1;
+	for (i = 0; format && format[i] != '\0'; i++)
+	{
+		if (format[i] != '%')
+		{
+			buffer[buff_ind++] = format[i];
+			if (buff_ind == BUFF_SIZE)
+				print_buffer(buffer, &buff_ind);
+			/* write(1, &format[i], 1);*/
+			printed_chars++;
+		}
+		else
+		{
+			print_buffer(buffer, &buff_ind);
+			flags = get_flags(format, &i);
+			width = get_width(format, &i, list);
+			precision = get_precision(format, &i, list);
+			size = get_size(format, &i);
+			++i;
+			printed = handle_print(format, &i, list, buffer,
+				flags, width, precision, size);
+			if (printed == -1)
+				return (-1);
+			printed_chars += printed;
+		}
+	}
 
-                if (num < 0)
-                {
-                    putchar('-');
-                    count++;
-                    temp = -num;
-                }
+	print_buffer(buffer, &buff_ind);
 
-                while (temp / 10 != 0)
-                {
-                    temp /= 10;
-                    digits++;
-                }
+	va_end(list);
 
-                divisor = 1;
-                for (i = 1; i < digits; i++)
-                    divisor *= 10;
+	return (printed_chars);
+}
 
-                while (divisor > 0)
-                {
-                    int digit = num / divisor;
-                    putchar(digit + '0');
-                    count++;
-                    num -= digit * divisor;
-                    divisor /= 10;
-                }
-            }
-            else if (*format == 'u')
-            {
-                u_num = va_arg(args, unsigned int);
-                temp = u_num;
-                digits = 1;
+/**
+ * print_buffer - Prints the contents of the buffer if it exist
+ * @buffer: Array of chars
+ * @buff_ind: Index at which to add next char, represents the length.
+ */
+void print_buffer(char buffer[], int *buff_ind)
+{
+	if (*buff_ind > 0)
+		write(1, &buffer[0], *buff_ind);
 
-                while (temp / 10 != 0)
-                {
-                    temp /= 10;
-                    digits++;
-                }
-
-                divisor = 1;
-                for (i = 1; i < digits; i++)
-                    divisor *= 10;
-
-                while (divisor > 0)
-                {
-                    int digit = u_num / divisor;
-                    putchar(digit + '0');
-                    count++;
-                    u_num -= digit * divisor;
-                    divisor /= 10;
-                }
-            }
-            else if (*format == 'b') 
-            {
-                u_num = va_arg(args, unsigned int);
-
-                if (u_num == 0)
-                {
-                    putchar('0');
-                    count++;
-                }
-                else
-                {
-                    int binary[32];
-                    int index = 0;
-
-                    while (u_num > 0)
-                    {
-                        binary[index] = u_num % 2;
-                        u_num /= 2;
-                        index++;
-                    }
-
-                    for (i = index - 1; i >= 0; i--)
-                    {
-                        putchar(binary[i] + '0');
-                        count++;
-                    }
-                }
-            }
-            else
-            {
-                putchar('%');
-                putchar(*format);
-                count += 2;
-            }
-        }
-        format++;
-    }
-
-    va_end(args);
-    return count;
+	*buff_ind = 0;
 }
