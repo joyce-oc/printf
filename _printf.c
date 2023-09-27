@@ -13,7 +13,8 @@ int _printf(const char *format, ...)
     int count = 0;
     char ch;
     int num, temp, digits, divisor;
-    int i; 
+    unsigned int u_num; 
+    int i;
 
     va_start(args, format);
 
@@ -73,7 +74,7 @@ int _printf(const char *format, ...)
                 }
 
                 divisor = 1;
-                for (i = 1; i < digits; i++) 
+                for (i = 1; i < digits; i++)
                     divisor *= 10;
 
                 while (divisor > 0)
@@ -83,6 +84,59 @@ int _printf(const char *format, ...)
                     count++;
                     num -= digit * divisor;
                     divisor /= 10;
+                }
+            }
+            else if (*format == 'u')
+            {
+                u_num = va_arg(args, unsigned int);
+                temp = u_num;
+                digits = 1;
+
+                while (temp / 10 != 0)
+                {
+                    temp /= 10;
+                    digits++;
+                }
+
+                divisor = 1;
+                for (i = 1; i < digits; i++)
+                    divisor *= 10;
+
+                while (divisor > 0)
+                {
+                    int digit = u_num / divisor;
+                    putchar(digit + '0');
+                    count++;
+                    u_num -= digit * divisor;
+                    divisor /= 10;
+                }
+            }
+            else if (*format == 'b') 
+            {
+                u_num = va_arg(args, unsigned int);
+
+                if (u_num == 0)
+                {
+                    putchar('0');
+                    count++;
+                }
+                else
+                {
+                    int binary[32];
+                    int index = 0;
+
+                    while (u_num > 0)
+                    {
+                        binary[index] = u_num % 2;
+                        u_num /= 2;
+                        index++;
+                    }
+
+                    for (i = index - 1; i >= 0; i--)
+                    {
+                        putchar(binary[i] + '0');
+                        count++;
+                    }
                 }
             }
             else
